@@ -1,0 +1,60 @@
+diff --git a/src/main/scala/xiangshan/backend/decode/VecDecoder.scala b/src/main/scala/xiangshan/backend/decode/VecDecoder.scala
+index 376419107..dbd7f2433 100644
+--- a/src/main/scala/xiangshan/backend/decode/VecDecoder.scala
++++ b/src/main/scala/xiangshan/backend/decode/VecDecoder.scala
+@@ -186,6 +186,10 @@ case class VST(src2: BitPat, fuOp: BitPat, strided: Boolean = false, indexed: Bo
+ 
+ object VecDecoder extends DecodeConstants {
+   val opivv: Array[(BitPat, XSDecodeBase)] = Array(
++    // ===== CIE-2026 自定义指令 vdot.vv : custom-0 opcode = 0x0B, funct7 = 0 =====
++    // vd[0] = sum_{i=0..7} sext(vs1[i]) * sext(vs2[i]) , SEW=8, 结果按 32 位写回 vd[0]
++    BitPat("b0000000??????????000?????0001011") ->
++      OPMVV(F, FuType.vipu, VipuType.vdot_vv, F, T, F, UopSplitType.VEC_VVV),
+     VADD_VV         -> OPIVV(FuType.vialuF, VialuFixType.vadd_vv, T, F, F),
+     VSUB_VV         -> OPIVV(FuType.vialuF, VialuFixType.vsub_vv, T, F, F),
+ 
+diff --git a/src/main/scala/xiangshan/backend/fu/wrapper/VIPU.scala b/src/main/scala/xiangshan/backend/fu/wrapper/VIPU.scala
+index 01346b645..5c9bdd2ca 100644
+--- a/src/main/scala/xiangshan/backend/fu/wrapper/VIPU.scala
++++ b/src/main/scala/xiangshan/backend/fu/wrapper/VIPU.scala
+@@ -146,5 +146,27 @@ class VIPU(cfg: FuConfig)(implicit p: Parameters) extends VecPipedFuncUnit(cfg)
+       subIO.in.bits.mask        := srcMask
+   }
+ 
+-  io.out.bits.res.data := vialu.io.out.bits.vd
++  // ===== CIE-2026 自定义指令 vdot.vv 的旁路实现 =====
++  // vd[0] (低 32 bit) = sum_{i=0..7} sext(vs1[8i+7:8i]) * sext(vs2[8i+7:8i])，其余位清零
++  private val isVdot = fuOpType === VipuType.vdot_vv
++  // 8 个 int8×int8 乘积符号扩展到 19 bit：|sum| <= 8*16384 = 131072 = 2^17，
++  // 19 bit 有符号范围 [-262144, 262143] 足够，比朴素的 34 bit 累加窄 15 bit
++  private val vdotProds: Seq[UInt] = (0 until 8).map { i =>
++    (vs1(8 * i + 7, 8 * i).asSInt * vs2(8 * i + 7, 8 * i).asSInt).pad(19).asUInt
++  }
++  // 3:2 进位保留加法器（CSA）：输出 (和, 左移一位的进位)
++  private def vdotCsa(a: UInt, b: UInt, c: UInt): (UInt, UInt) =
++    (a ^ b ^ c, Cat(((a & b) | (a & c) | (b & c))(17, 0), 0.U(1.W)))
++  // Wallace 压缩树：8 个操作数压到 2 个（4 级 CSA），再做 1 级进位传递加法；
++  // 相比 7 级串行 CPA，关键路径与操作数个数脱钩
++  private val (w0s, w0c) = vdotCsa(vdotProds(0), vdotProds(1), vdotProds(2))
++  private val (w1s, w1c) = vdotCsa(w0s, w0c, vdotProds(3))
++  private val (w2s, w2c) = vdotCsa(vdotProds(4), vdotProds(5), vdotProds(6))
++  private val (w3s, w3c) = vdotCsa(w2s, w2c, vdotProds(7))
++  private val (w4s, w4c) = vdotCsa(w1s, w1c, w3s)
++  private val (w5s, w5c) = vdotCsa(w4s, w4c, w3c)
++  private val vdotSum19 = (w5s + w5c)(18, 0).asSInt
++  private val vdotResData = Cat(0.U((dataWidth - 32).W), vdotSum19.pad(32).asUInt)
++
++  io.out.bits.res.data := Mux(isVdot, vdotResData, vialu.io.out.bits.vd)
+ }
+diff --git a/yunsuan/src/main/scala/yunsuan/package.scala b/src/main/scala/yunsuan/package.scala
+index 069366b..80751b8 100644
+--- a/yunsuan/src/main/scala/yunsuan/package.scala
++++ b/yunsuan/src/main/scala/yunsuan/package.scala
+@@ -278,6 +278,7 @@ package object yunsuan {
+     def vid_v                          = "b01010001".U(OpTypeWidth.W) // vid
+ 
+     def vmv_x_s                        = "b01010011".U(OpTypeWidth.W) // vmvxs
++    def vdot_vv                        = "b01010100".U(OpTypeWidth.W) // CIE-2026 custom vdot.vv
+   }
+ 
+   object VidivType {

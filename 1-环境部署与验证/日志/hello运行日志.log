@@ -1,0 +1,13 @@
+emu compiled at Oct 29 2026, 16:25:22
+Using simulated 32768B flash
+Using simulated 8386560MB RAM
+The image is /home/rv/work/xs-env/nexus-am/apps/hello-xiangshan/build/hello-xiangshan-riscv64-xs.bin
+hello xiangshan, I am Yime!
+Team: panpan最努力
+Members: 王一鸣(队长), 潘荣轩, 王恩惠, 陶心如
+University: 齐鲁师范学院
+Advisor: 冯希叶
+IP address: 192.168.68.5
+Core-0 instrCnt = 2,980, cycleCnt = 20,996, IPC = 0.141932
+Seed=0 Guest cycle spent: 21,000 (this will be different from cycleCnt if emu loads a snapshot)
+Host time spent: 32,887ms

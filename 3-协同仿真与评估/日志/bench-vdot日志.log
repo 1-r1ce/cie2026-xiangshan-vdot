@@ -1,0 +1,10 @@
+emu compiled at Oct 29 2026, 16:25:22
+Using simulated 32768B flash
+Using simulated 8386560MB RAM
+The image is /home/rv/work/xs-env/nexus-am/apps/bench-vdot-xiangshan/build/bench-vdot-xiangshan-riscv64-xs.bin
+=== vdot.vv latency bench, iters=1000, vl=8 SEW=8 ===
+sum = 43  expected 43  PASS
+VDOT DONE
+Core-0 instrCnt = 5,926, cycleCnt = 15,869, IPC = 0.373432
+Seed=0 Guest cycle spent: 15,873 (this will be different from cycleCnt if emu loads a snapshot)
+Host time spent: 36,660ms

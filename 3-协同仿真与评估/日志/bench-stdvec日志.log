@@ -1,0 +1,10 @@
+emu compiled at Oct 29 2026, 16:25:22
+Using simulated 32768B flash
+Using simulated 8386560MB RAM
+The image is /home/rv/work/xs-env/nexus-am/apps/bench-stdvec-xiangshan/build/bench-stdvec-xiangshan-riscv64-xs.bin
+=== stdvec(vmul.vv+vredsum.vs) bench, iters=1000 ===
+lane0 = 6  (本配置 vredsum 归约结果与规范不符，此程序仅用于计时)
+STDVEC DONE
+Core-0 instrCnt = 8,100, cycleCnt = 22,181, IPC = 0.365177
+Seed=0 Guest cycle spent: 22,185 (this will be different from cycleCnt if emu loads a snapshot)
+Host time spent: 54,089ms

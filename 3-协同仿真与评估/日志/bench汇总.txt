@@ -1,0 +1,26 @@
+# 原始测量记录（2026-10-30，香山 V2 MinimalConfig + Verilator 5.052，服务器 192.168.68.5）
+# 程序                              ITERS   instrCnt  cycleCnt  IPC    仿真耗时
+bench-scalar-xiangshan                  0      2,555    11,735    -       14 s
+bench-scalar-xiangshan               1000     65,695    45,175    1.454   83 s
+bench-stdvec-xiangshan                 0      2,904    13,303    -       17 s
+bench-stdvec-xiangshan               100      3,275    13,642    -       24 s
+bench-stdvec-xiangshan              1000      6,911    16,837    -       26 s
+bench-vdot-xiangshan                   0      2,821    12,982    -       16 s
+bench-vdot-xiangshan                1000      5,926    15,869    0.373   29 s
+
+# 斜率 = (cycleCnt(N) - cycleCnt(0)) / N
+# 标量   : (45175-11735)/1000 = 33.44 周期/点积
+# stdvec : (16837-13303)/1000 =  3.53 周期/点积
+# vdot   : (15869-12982)/1000 =  2.89 周期/点积
+# 加速比 : vdot/标量 = 11.58x ; vdot/stdvec = 1.22x ; stdvec/标量 = 9.47x
+
+## 2026-11-05 录屏实况（三程序按提交脚本原样跑，ITERS=1000）
+
+| 程序 | instrCnt | cycleCnt | IPC | HIT GOOD TRAP pc | Host time |
+|---|---|---|---|---|---|
+| bench-scalar-xiangshan | 65,697 | 45,169 | 1.454471 | 0x800001ba | 106,833 ms |
+| bench-stdvec-xiangshan | 8,100 | 22,181 | 0.365177 | 0x800001a6 | 54,089 ms |
+| bench-vdot-xiangshan | 5,926 | 15,869 | 0.373432 | 0x800001b6 | 36,660 ms |
+
+三个程序合计 198 秒；原始日志见 `/tmp/v3-bench-*.log`（每个约 3 MB，几乎全是 `[PERF ]` 计数器行）。
+指令数与周期数逐次一致，墙钟时间随机器负载浮动（2026-10-30 那轮三个合计 131 秒）。

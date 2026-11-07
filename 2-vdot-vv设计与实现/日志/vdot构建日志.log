@@ -1,0 +1,10 @@
+# Building vdot-xiangshan [riscv64-xs] with AM_HOME {/home/rv/work/xs-env/nexus-am}
++ CC main.c
+# Building lib-am [riscv64-xs]
++ AS src/nemu/common/mainargs.S
++ AR -> build/am-riscv64-xs.a
+# Building lib-klib [riscv64-xs]
+# Creating binary image [riscv64-xs]
++ LD -> build/vdot-xiangshan-riscv64-xs.elf
+riscv64-linux-gnu-ld: warning: /home/rv/work/xs-env/nexus-am/apps/vdot-xiangshan/build/vdot-xiangshan-riscv64-xs.elf has a LOAD segment with RWX permissions
++ OBJCOPY -> build/vdot-xiangshan-riscv64-xs.bin

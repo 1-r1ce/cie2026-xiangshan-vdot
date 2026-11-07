@@ -1,0 +1,22 @@
+emu compiled at Oct 29 2026, 16:25:22
+Using simulated 32768B flash
+Using simulated 8386560MB RAM
+The image is /home/rv/work/xs-env/nexus-am/apps/vdot-xiangshan/build/vdot-xiangshan-riscv64-xs.bin
+=== CIE-2026 custom instruction vdot.vv test ===
+Team: panpan / Qilu Normal University
+semantics: vd[0](32bit) = sum(sext8(vs1[i])*sext8(vs2[i])), i=0..7
+[env] mstatus = 0x6600 (VS = 3)
+[test 1] positive integers (expect 20400)
+  positive       got = 2040, expect = 2040 -> PASS
+[test 2] negative / mixed sign
+  negative       got = 4, expect = 4 -> PASS
+[test 3a] max*max (expect 129032)
+  max*max        got = 129032, expect = 129032 -> PASS
+[test 3b] min*min (expect 131072)
+  min*min        got = 131072, expect = 131072 -> PASS
+[test 3c] extreme cancel (expect -260096)
+  mixed-extreme  got = -130048, expect = -130048 -> PASS
+=== summary: ALL PASS ===
+Core-0 instrCnt = 21,500, cycleCnt = 74,585, IPC = 0.288262
+Seed=0 Guest cycle spent: 74,589 (this will be different from cycleCnt if emu loads a snapshot)
+Host time spent: 214,631ms

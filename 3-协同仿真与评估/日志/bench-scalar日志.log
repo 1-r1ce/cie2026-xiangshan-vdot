@@ -1,0 +1,10 @@
+emu compiled at Oct 29 2026, 16:25:22
+Using simulated 32768B flash
+Using simulated 8386560MB RAM
+The image is /home/rv/work/xs-env/nexus-am/apps/bench-scalar-xiangshan/build/bench-scalar-xiangshan-riscv64-xs.bin
+=== scalar 8-MAC baseline, iters=1000 ===
+sum = 43  expected 43  PASS
+SCALAR DONE
+Core-0 instrCnt = 65,697, cycleCnt = 45,169, IPC = 1.454471
+Seed=0 Guest cycle spent: 45,173 (this will be different from cycleCnt if emu loads a snapshot)
+Host time spent: 106,833ms

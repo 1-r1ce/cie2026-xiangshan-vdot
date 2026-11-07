@@ -1,0 +1,71 @@
+diff --git a/configs/riscv64-xs-ref_defconfig b/configs/riscv64-xs-ref_defconfig
+index 2c91e3f6..044aa926 100644
+--- a/configs/riscv64-xs-ref_defconfig
++++ b/configs/riscv64-xs-ref_defconfig
+@@ -192,7 +192,7 @@ CONFIG_HAS_PORT_IO=y
+ # CONFIG_HAS_DISK is not set
+ # CONFIG_HAS_SDCARD is not set
+ CONFIG_HAS_FLASH=y
+-CONFIG_FLASH_PRESET_CONTENT="0x74446073,0x0010029b,0x02a29313,0x30033073,0x01f29293,0x00028067"
++CONFIG_FLASH_PRESET_CONTENT="0x0010029b,0x01f29293,0x00028067"
+ CONFIG_FLASH_START_ADDR=0x10000000
+ CONFIG_FLASH_SIZE=0x100000
+ CONFIG_FLASH_IMG_PATH=""
+diff --git a/src/isa/riscv64/include/isa-all-instr.h b/src/isa/riscv64/include/isa-all-instr.h
+index 2f18ca17..83f6fd0b 100644
+--- a/src/isa/riscv64/include/isa-all-instr.h
++++ b/src/isa/riscv64/include/isa-all-instr.h
+@@ -155,7 +155,7 @@
+ 
+ #ifdef CONFIG_RVV
+ #define VECTOR_INSTR_TERNARY(f) \
+-  f(vadd) f(vsub) f(vrsub) f(vminu) f(vmin) \
++  f(vdot_vv) f(vadd) f(vsub) f(vrsub) f(vminu) f(vmin) \
+   f(vmaxu) f(vmax) f(vand) f(vor) f(vxor) \
+   f(vrgather) f(vrgatherei16) \
+   f(vadc) f(vmadc) f(vsbc) f(vmsbc) \
+diff --git a/src/isa/riscv64/instr/decode.c b/src/isa/riscv64/instr/decode.c
+index 11290c89..283a6436 100644
+--- a/src/isa/riscv64/instr/decode.c
++++ b/src/isa/riscv64/instr/decode.c
+@@ -99,6 +99,10 @@ def_THelper(main) {
+ #ifdef CONFIG_RVV
+   def_INSTR_IDTAB("??????? ????? ????? ??? ????? 10101 ??", OP_V  , OP_V);
+ #endif // CONFIG_RVV
++#ifdef CONFIG_RVV
++  // CIE-2026 自定义指令 vdot.vv : custom-0 = 0b0001011, funct3 = 000, funct7 = 0
++  def_INSTR_TAB  ("0000000 ????? ????? 000 ????? 00010 11",        vdot_vv);
++#endif // CONFIG_RVV
+ #ifdef CONFIG_RV_AME
+   def_INSTR_TAB  ("??????? ????? ????? ??? ????? 01010 ??",         OP_M);
+ #endif // CONFIG_RV_AME
+diff --git a/src/isa/riscv64/instr/rvv/vcompute.h b/src/isa/riscv64/instr/rvv/vcompute.h
+index 2bcb6aae..ad4a7ee5 100644
+--- a/src/isa/riscv64/instr/rvv/vcompute.h
++++ b/src/isa/riscv64/instr/rvv/vcompute.h
+@@ -23,6 +23,25 @@ def_EHelper(vadd) {
+   ARITH(ADD, SIGNED)
+ }
+ 
++// ===== CIE-2026 自定义指令 vdot.vv : custom-0 (opcode 0x0B), funct3=000, funct7=0 =====
++// vd[0] 的低 32 bit = sum_{i=0..7} sext8(vs1[i]) * sext8(vs2[i])，其余位清零
++def_EHelper(vdot_vv) {
++  const int vd  = BITS(s->isa.instr.val, 11, 7);
++  const int vs1 = BITS(s->isa.instr.val, 19, 15);
++  const int vs2 = BITS(s->isa.instr.val, 24, 20);
++  int32_t sum = 0;
++  int i;
++  for (i = 0; i < 8; i++) {
++    int8_t a = (int8_t)vreg_b(vs1, i);
++    int8_t b = (int8_t)vreg_b(vs2, i);
++    sum += (int32_t)a * (int32_t)b;
++  }
++  for (i = 0; i < VENUM8; i++) {
++    vreg_b(vd, i) = 0;
++  }
++  vreg_i(vd, 0) = (uint32_t)sum;
++}
++
+ def_EHelper(vsub) {
+   ARITH(SUB, SIGNED)
+ }
